@@ -1,0 +1,14 @@
+{
+  "users": {
+    "id": "INTEGER",
+    "name": "TEXT",
+    "country": "TEXT",
+    "signup_date": "TEXT"
+  },
+  "orders": {
+    "id": "INTEGER",
+    "user_id": "INTEGER",
+    "amount": "REAL",
+    "created_at": "TEXT"
+  }
+}

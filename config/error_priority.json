@@ -1,0 +1,41 @@
+[
+  ["syntax", "sql_syntax_error"],
+  ["syntax", "invalid_alias"],
+
+  ["schema_link", "table_missing"],
+  ["schema_link", "col_missing"],
+  ["schema_link", "ambiguous_col"],
+  ["schema_link", "incorrect_foreign_key"],
+
+  ["join", "join_missing"],
+  ["join", "incorrect_col"],
+  ["join", "join_wrong_type"],
+  ["join", "extra_table"],
+
+  ["filter", "where_missing"],
+  ["filter", "condition_wrong_col"],
+  ["filter", "condition_type_mismatch"],
+
+  ["aggregation", "agg_no_groupby"],
+  ["aggregation", "groupby_missing_col"],
+  ["aggregation", "having_without_groupby"],
+  ["aggregation", "having_incorrect"],
+  ["aggregation", "having_vs_where"],
+
+  ["value", "value_format_wrong"],
+  ["value", "hardcoded_value"],
+
+  ["subquery", "subquery_missing"],
+  ["subquery", "unused_subquery"],
+  ["subquery", "subquery_correlation_error"],
+
+  ["set_operations", "union_missing"],
+  ["set_operations", "intersect_missing"],
+  ["set_operations", "except_missing"],
+
+  ["other", "order_by_missing"],
+  ["other", "limit_missing"],
+  ["other", "duplicate_select"],
+  ["other", "unsupported_function"],
+  ["other", "extra_values_selected"]
+]

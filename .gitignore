@@ -1,0 +1,5 @@
+/.env
+/db.ipynb
+/openai1.py
+/sql_of_thought_demo.py
+/__pycache__
