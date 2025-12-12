@@ -221,20 +221,29 @@ Schema
   - amount REAL
   - created_at TEXT
 
-Relationships
 
-- orders.user_id references users.id (one-to-many: one user can have many orders)
 
-Sample rows
+Users table:
 
-- users
-  - (4, "Hana", "USA", "2023-09-27")
-  - (11, "Charlie", "USA", "2024-09-12")
-  - (19, "Bob", "USA", "2024-05-16")
-- orders
-  - (1, 4, 120.50, "2024-01-05")
-  - (2, 11, 45.00, "2024-02-13")
-  - (3, 19, 75.25, "2024-03-20")
+| id  | name     | country | signup_date |
+|-----:|----------|---------|-------------|
+| 4   | Hana     | USA     | 2023-09-27  |
+| 11  | Charlie  | USA     | 2024-09-12  |
+| 19  | Bob      | USA     | 2024-05-16  |
+| 21  | Aisha    | CAN     | 2024-02-08  |
+| 22  | Miguel   | MEX     | 2023-11-03  |
+
+Orders table:
+
+| id  | user_id | amount  | created_at  |
+|-----:|--------:|--------:|-------------|
+| 1   | 4       | 120.50  | 2024-01-05  |
+| 2   | 11      | 45.00   | 2024-02-13  |
+| 3   | 19      | 75.25   | 2024-03-20  |
+| 4   | 21      | 200.00  | 2024-04-11  |
+| 5   | 22      | 15.75   | 2024-05-02  |
+
+Relationship: users.id → orders.user_id (one-to-many)
 
 Quick commands
 
