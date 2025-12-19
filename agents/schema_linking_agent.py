@@ -6,7 +6,7 @@ from utils.openai_client import client
 with open("config/schema.json", "r") as f:
     SCHEMA: Dict[str, Dict[str, str]] = json.load(f)
 
-def schema_linking(question: str, model: str = "gpt-4.1-mini") -> Dict[str, Any]:
+def schema_linking(question: str, model: str) -> Dict[str, Any]:
     schema_str = json.dumps(SCHEMA, indent=2)
     prompt = f"""
 You are an expert SQL assistant.
@@ -31,7 +31,7 @@ Only include relevant columns.
     response = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0
+        # temperature=0
     )
 
     text_output = response.choices[0].message.content.strip()

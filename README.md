@@ -221,27 +221,25 @@ Schema
   - amount REAL
   - created_at TEXT
 
-
-
 Users table:
 
-| id  | name     | country | signup_date |
-|-----:|----------|---------|-------------|
-| 4   | Hana     | USA     | 2023-09-27  |
-| 11  | Charlie  | USA     | 2024-09-12  |
-| 19  | Bob      | USA     | 2024-05-16  |
-| 21  | Aisha    | CAN     | 2024-02-08  |
-| 22  | Miguel   | MEX     | 2023-11-03  |
+|  id | name    | country | signup_date |
+| --: | ------- | ------- | ----------- |
+|   4 | Hana    | USA     | 2023-09-27  |
+|  11 | Charlie | USA     | 2024-09-12  |
+|  19 | Bob     | USA     | 2024-05-16  |
+|  21 | Aisha   | CAN     | 2024-02-08  |
+|  22 | Miguel  | MEX     | 2023-11-03  |
 
 Orders table:
 
-| id  | user_id | amount  | created_at  |
-|-----:|--------:|--------:|-------------|
-| 1   | 4       | 120.50  | 2024-01-05  |
-| 2   | 11      | 45.00   | 2024-02-13  |
-| 3   | 19      | 75.25   | 2024-03-20  |
-| 4   | 21      | 200.00  | 2024-04-11  |
-| 5   | 22      | 15.75   | 2024-05-02  |
+|  id | user_id | amount | created_at |
+| --: | ------: | -----: | ---------- |
+|   1 |       4 | 120.50 | 2024-01-05 |
+|   2 |      11 |  45.00 | 2024-02-13 |
+|   3 |      19 |  75.25 | 2024-03-20 |
+|   4 |      21 | 200.00 | 2024-04-11 |
+|   5 |      22 |  15.75 | 2024-05-02 |
 
 Relationship: users.id → orders.user_id (one-to-many)
 
@@ -263,92 +261,72 @@ Notes
 
 - The example DB is intentionally small to make pipeline debugging and error-correction demonstrations deterministic.
 
-### Input
+### Example query
+![alt text](image.png)
 
-**Question:** "Show me the users in the USA."
+**Question:** "Show me users in the USA."
 
-**Detected Schema:**
+**Initial SQL (example LLM output):**  
+`SELECT FROM orders country = 'Vietnam';`
 
-```json
-{
-  "tables": {
-    "users": ["id", "name", "country"]
-  },
-  "reasoning": "The users table contains the country column needed to filter users by location."
-}
-```
+Correction loop
 
-**Intent Classification:** `filter`
+Iteration 1
 
-**Query Plan:**
-
-```json
-{
-  "select": ["id", "name", "country"],
-  "from": "users",
-  "where": { "country": "USA" }
-}
-```
-
-### Pipeline Execution with Error Correction
-
-**Initial SQL:** `SELECT FROM WHERE;`
-
-#### Iteration 1
-
-- **Detected Error:** `syntax.sql_syntax_error`
-- **Reason:** Missing SELECT columns and FROM table name
-- **Fix Plan:** Add columns after SELECT and table name after FROM
-- **Corrected SQL:** `SELECT * FROM table_name WHERE;`
-
-#### Iteration 2
-
-- **Detected Error:** `syntax.sql_syntax_error`
-- **Reason:** WHERE clause has no condition specified
-- **Fix Plan:** Add valid condition to filter by country = 'USA'
-- **Corrected SQL:** `SELECT * FROM table_name WHERE country = 'USA';`
-
-#### Iteration 3
-
-- **Detected Error:** `schema_link.table_missing`
-- **Reason:** Table 'table_name' does not exist in schema
-- **Fix Plan:** Replace 'table_name' with correct table 'users'
-- **Corrected SQL:** `SELECT * FROM users WHERE country = 'USA';`
-
-### Final Result
-
-**Success:** ✅ True (Iterations: 4)
-
-**Final SQL:**
+- Error message: `near "FROM": syntax error`
+- Classified error: `syntax.sql_syntax_error`
+- Reason: The SELECT statement has no column list, making the query syntactically invalid (SELECT FROM ...).
+- Fix plan: Provide a valid column list after SELECT (e.g., SELECT id, name, country) before FROM, and then optionally add a WHERE clause to filter by country.
+- Corrected SQL:
 
 ```sql
-SELECT * FROM users WHERE country = 'USA';
+SELECT id, country
+FROM orders
+WHERE country = 'Vietnam';
 ```
 
-**Query Results:**
+Iteration 2
 
-```json
-[
-  {
-    "id": 4,
-    "name": "Hana",
-    "country": "USA",
-    "signup_date": "2023-09-27"
-  },
-  {
-    "id": 11,
-    "name": "Charlie",
-    "country": "USA",
-    "signup_date": "2024-09-12"
-  },
-  {
-    "id": 19,
-    "name": "Bob",
-    "country": "USA",
-    "signup_date": "2024-05-16"
-  }
-]
+- Error message: `no such column: country`
+- Classified error: `filter.condition_wrong_col`
+- Reason: The query references country in the WHERE clause, but the orders table does not have a country column (country exists in users).
+- Fix plan: Query should target the users table and filter by country, e.g., SELECT id, name, country FROM users WHERE country = 'USA';
+- Corrected SQL:
+
+```sql
+SELECT id, name, country
+FROM users
+WHERE country = 'Vietnam';
 ```
+
+Iteration 3
+
+- Error message: (no runtime SQL error)
+- Classified error: `value.hardcoded_value`
+- Reason: The WHERE clause uses a hardcoded country value ('Vietnam') which does not meet the requirement to show users in the USA.
+- Fix plan: Change the WHERE filter to `WHERE country = 'USA'` (or use a parameter for the target country).
+- Corrected SQL:
+
+```sql
+SELECT id, name, country
+FROM users
+WHERE country = 'USA';
+```
+
+Iteration 4
+
+- Error message: (none)
+- Classified error: `None.None`
+- Reason: None
+- Fix plan: None
+
+Result:
+
+|  id | name    | country |
+| --: | ------- | ------- |
+|   4 | Hana    | USA     |
+|  11 | Charlie | USA     |
+|  19 | Bob     | USA     |
 
 ## Development
 
@@ -357,10 +335,6 @@ To extend the system:
 1. Add new agents in `agents/` directory
 2. Update error taxonomy in `config/error_taxonomy.json`
 3. Modify pipeline in `pipeline.py` to include new agents
-
-## License
-
-Proprietary - SQL-of-Thought Project
 
 ## Notes
 

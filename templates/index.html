@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL-of-Thought Demo</title>
+    <style>
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            width: 100%;
+        }
+    
+        /* table {
+            border-collapse: collapse;
+        } */
+    
+        td, th {
+            border: 1px solid black;
+            padding: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Ask a question</h2>
+
+    <form method="post">
+        <input type="text" name="question" size="80" placeholder="e.g. total sales per country in 2024">
+        <button type="submit">Run</button>
+    </form>
+
+    {% if response %}
+    
+    <h2>Linked schema</h2>
+    <pre>{{ response.schema }}</pre>
+    
+    <h2>Subproblems</h2>
+    <pre>{{ response.subproblems }}</pre>
+    
+    <h2>Query Plan</h2>
+    <pre>{{ response.query_plan }}</pre>
+    <!-- <ul>
+        {% for step in response.query_plan %}
+        <li>{{ step }}</li>
+        {% endfor %}
+    </ul> -->
+    
+    <h2>Initial SQL</h2>
+    <pre>{{ response.initial_sql }}</pre>
+    
+    <h2>Correction loop</h2>
+    
+    {% for iter, value in response.correction_loop.items() %}
+    <h3 style="border-bottom: 1px solid black;">Iteration {{ iter }}</h3>
+    
+    <b>Error message:</b>
+    <pre>{{ value.error_message }}</pre>
+    
+    <b>Classified error:</b>
+    <pre>{{value.category}}.{{ value.error_code }}</pre>
+
+    <b>Reason:</b>
+    <pre>{{ value.reason }}</pre>
+    
+    <b>Fix plan:</b>
+    <pre>{{ value.fix_plan }}</pre>
+    
+    {% if value.corrected_sql %}
+    <b>Corrected SQL:</b>
+    <pre>{{ value.corrected_sql }}</pre>
+    {% endif %}
+
+    {% endfor %}
+
+
+    {% if response.result %}
+    <h2>Result:</h2>
+    <pre>
+    <table border="1">
+        <tr>
+            {% for col in response.result.columns %}
+            <th>{{ col }}</th>
+            {% endfor %}
+        </tr>
+        {% for row in response.result.rows %}
+        <tr>
+            {% for cell in row %}
+            <td>{{ cell }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+    </pre>
+    {% endif %}
+    
+    {% endif %}
+    
+    <!-- {% if columns %}
+    <h3>Result</h3>
+    <table border="1">
+        <tr>
+            {% for col in columns %}
+            <th>{{ col }}</th>
+            {% endfor %}
+        </tr>
+        {% for row in rows %}
+        <tr>
+            {% for cell in row %}
+            <td>{{ cell }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %} -->
+</body>
+
+</html>

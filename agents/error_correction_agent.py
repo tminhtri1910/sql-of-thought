@@ -2,11 +2,11 @@ import json
 from typing import Dict, Any
 from utils.openai_client import client
 
-# Load taxonomy once
+# Load taxonomy
 with open("config/error_taxonomy.json", "r") as f:
     ERROR_TAXONOMY = json.load(f)
 
-def correction_plan_from_runtime(question:str, linked_schema: Dict[str, Any], sql: str, error_message: str, model: str = "gpt-4.1-mini") -> dict:
+def correction_plan_from_runtime(question:str, linked_schema: Dict[str, Any], sql: str, error_message: str, model: str) -> dict:
     """
     Combines:
     1) Runtime error classification (category + error_code)
@@ -40,27 +40,35 @@ Database Runtime Error:
 Error Taxonomy (JSON):
 {taxonomy_str}
 
-You must identify and correct only ONE error in the given SQL.
+You are given an SQL query
 
 TASK:
-1. Detect the single most relevant error and label it with its taxonomy category.
-2. Explain in 1–2 sentences why this error makes the SQL incorrect.
-3. Provide a short, high-level plan to fix only this one error (do not fix anything else).
+1. If you can confidently detect one clear error, identify only the most relevant one and label it with its taxonomy category.
+2. Briefly explain (1–2 sentences) why this error makes the SQL incorrect.
+3. Provide a short, high-level plan to fix only this error (do not fix anything else).
 
-Return ONLY JSON like this:
+If no clear error can be confidently detected, return null values for all fields.
+
+OUTPUT FORMAT (JSON only):
 {{
-  "category": "<category_name or null>",
-  "error_code": "<error_code or null>",
-  "reason": "<reason explaining the error>",
-  "fix_plan": "<short high-level plan to fix the SQL>"
+    "category": "<category_name or null>",
+    "error_code": "<error_code or null>",
+    "reason": "<reason explaining the error or null>",
+    "fix_plan": "<short high-level plan to fix the SQL or null>"
 }}
-Do NOT include code fences such as ```json.
+
+Rules:
+    Return only JSON
+    Do not include code fences
+    Do not invent or guess errors, only error in {taxonomy_str}
+    Reason and fix plan include only one error
+    Detect at most one error
 """
 
     response = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0
+        # temperature=0
     )
 
     text = response.choices[0].message.content.strip()
@@ -83,7 +91,7 @@ Do NOT include code fences such as ```json.
         }
 
 
-def apply_correction_to_sql(sql: str, fix_plan: str, model: str = "gpt-4.1-mini") -> str:
+def apply_correction_to_sql(sql: str, fix_plan: str, model: str) -> str:
     """
     Applies a fix plan to the current SQL query using LLM.
 
@@ -115,7 +123,7 @@ TASK:
     response = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0
+        # temperature=0
     )
 
     corrected_sql = response.choices[0].message.content.strip()
